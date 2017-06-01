@@ -1,0 +1,10 @@
+{
+  "name": "cry_wolf",
+  "version": "1.0.0",
+  "main": "server.js",
+  "author": "Grant Lindberg",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^3.0.0"
+  }
+}
