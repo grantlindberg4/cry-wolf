@@ -5,8 +5,9 @@ var connectionAttempts = 1;
 
 
 function createWebSocket() {
-  var sock = new WebSocket(URL);
   var log = document.getElementById("log");
+
+  var sock = new WebSocket(URL);
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
