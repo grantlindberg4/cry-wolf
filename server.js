@@ -1,24 +1,24 @@
 const WebSocket = require("ws");
 
-const serv = new WebSocket.Server({ port: 8080 });
+const server = new WebSocket.Server({ port: 8080 });
 
 function heartbeat() {
   this.isAlive = true;
 }
 
-serv.broadcast = function broadcast(data) {
-  serv.clients.forEach(function each(client) {
+server.broadcast = function broadcast(data) {
+  server.clients.forEach(function each(client) {
     if(client.readyState === WebSocket.OPEN) {
       client.send(data);
     }
   });
 };
 
-serv.on("connection", function connection(sock) {
+server.on("connection", function connection(sock) {
   sock.isAlive = true;
   sock.on("pong", heartbeat);
   sock.on("message", function incoming(data) {
-    serv.clients.forEach(function each(client) {
+    server.clients.forEach(function each(client) {
       if(client.readyState === WebSocket.OPEN) {
         client.send(data);
       }
@@ -27,7 +27,7 @@ serv.on("connection", function connection(sock) {
 });
 
 const interval = setInterval(function ping() {
-  serv.clients.forEach(function each(sock) {
+  server.clients.forEach(function each(sock) {
     if(sock.isAlive === false) {
       return sock.terminate();
     }

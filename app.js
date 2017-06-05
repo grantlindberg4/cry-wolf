@@ -1,13 +1,13 @@
-const URL = "ws://localhost:8080";
-const MAX_WAIT_TIME = 30;
+const url = "ws://localhost:8080";
+const maxWaitTime = 30;
 
-var connectionAttempts = 1;
+let connectionAttempts = 1;
 
 
 function createWebSocket() {
-  var log = document.getElementById("log");
+  const log = document.getElementById("log");
 
-  var sock = new WebSocket(URL);
+  const sock = new WebSocket(url);
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
@@ -16,13 +16,13 @@ function createWebSocket() {
 
   sock.addEventListener("message", function(event) {
     console.log(event.data);
-    var message = document.createElement("p");
+    const message = document.createElement("p");
     message.innerText = event.data;
     log.appendChild(message);
   });
 
   sock.addEventListener("close", function(e) {
-    var reason = "Unknown error";
+    let reason;
     switch(e.code) {
       case 1000:
         reason = "Normal closure";
@@ -72,10 +72,13 @@ function createWebSocket() {
       case 1015:
         reason = "Failure to perform a TLS handshake";
         break;
+      default:
+        reason = "Unknown error";
+        break;
     }
     console.log("Error: " + reason);
 
-    var waitTime = generateWaitTime(connectionAttempts);
+    const waitTime = generateWaitTime(connectionAttempts);
     setTimeout(function() {
       connectionAttempts += 1;
       createWebSocket();
@@ -83,15 +86,15 @@ function createWebSocket() {
   });
 
   document.getElementById("send-button").onclick = function() {
-    var text = document.getElementById("text").value;
+    const text = document.getElementById("text").value;
     sock.send(text);
   };
 }
 
 function generateWaitTime(k) {
-  var waitTime = (Math.pow(2, k) - 1)*1000;
-  if(waitTime > MAX_WAIT_TIME*1000) {
-    waitTime = MAX_WAIT_TIME*1000;
+  let waitTime = (Math.pow(2, k) - 1)*1000;
+  if(waitTime > maxWaitTime*1000) {
+    waitTime = maxWaitTime*1000;
   }
 
   return Math.random() * waitTime;
