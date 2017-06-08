@@ -1,13 +1,13 @@
-const url = "ws://localhost:8080";
-const maxWaitTime = 30;
+const URL = "ws://localhost:8080";
+const MAX_WAIT_TIME = 30;
 
 let connectionAttempts = 1;
 
 
 function createWebSocket() {
-  const log = document.getElementById("log");
+  let log = document.getElementById("log");
 
-  const sock = new WebSocket(url);
+  let sock = new WebSocket(URL);
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
@@ -16,7 +16,7 @@ function createWebSocket() {
 
   sock.addEventListener("message", function(event) {
     console.log(event.data);
-    const message = document.createElement("p");
+    let message = document.createElement("p");
     message.innerText = event.data;
     log.appendChild(message);
   });
@@ -78,7 +78,7 @@ function createWebSocket() {
     }
     console.log("Error: " + reason);
 
-    const waitTime = generateWaitTime(connectionAttempts);
+    let waitTime = generateWaitTime(connectionAttempts);
     setTimeout(function() {
       connectionAttempts += 1;
       createWebSocket();
@@ -86,15 +86,15 @@ function createWebSocket() {
   });
 
   document.getElementById("send-button").onclick = function() {
-    const text = document.getElementById("text").value;
-    sock.send(text);
+    let message = document.getElementById("message").value;
+    sock.send(message);
   };
 }
 
 function generateWaitTime(k) {
   let waitTime = (Math.pow(2, k) - 1)*1000;
-  if(waitTime > maxWaitTime*1000) {
-    waitTime = maxWaitTime*1000;
+  if(waitTime > MAX_WAIT_TIME*1000) {
+    waitTime = MAX_WAIT_TIME*1000;
   }
 
   return Math.random() * waitTime;
