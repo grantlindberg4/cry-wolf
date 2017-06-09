@@ -99,7 +99,11 @@ function sendMessage(sock) {
 }
 
 function generateWaitTime(k) {
-  let waitTime = (Math.pow(2, k) - 1)*1000;
+  let waitTime = 1;
+  for(let i = 0; i < k; i++) {
+    waitTime *= 2;
+  }
+  waitTime = (waitTime - 1)*1000;
   if(waitTime > MAX_WAIT_TIME*1000) {
     waitTime = MAX_WAIT_TIME*1000;
   }
