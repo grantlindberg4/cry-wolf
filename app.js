@@ -7,7 +7,7 @@ let connectionAttempts = 1;
 function createWebSocket() {
   let log = document.getElementById("log");
 
-  let sock = new WebSocket(URL);
+  sock = new WebSocket(URL);
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
@@ -86,9 +86,16 @@ function createWebSocket() {
   });
 
   document.getElementById("send-button").onclick = function() {
-    let message = document.getElementById("message").value;
-    sock.send(message);
+    sendMessage(sock);
   };
+
+  return sock;
+}
+
+function sendMessage(sock) {
+  let message = document.getElementById("message").value;
+  sock.send(message);
+  document.getElementById("message").value = "";
 }
 
 function generateWaitTime(k) {
@@ -100,6 +107,22 @@ function generateWaitTime(k) {
   return Math.random() * waitTime;
 }
 
+let sock;
+
 window.addEventListener("load", function() {
-  createWebSocket();
+  sock = createWebSocket();
 });
+
+window.addEventListener("keydown", function(event) {
+    if(event.defaultPrevented) {
+      return;
+    }
+    switch(event.key) {
+      case "Enter":
+        sendMessage(sock);
+        break;
+      default:
+        return;
+    }
+    event.preventDefault();
+  }, true);
