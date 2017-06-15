@@ -4,14 +4,14 @@ const MAX_WAIT_TIME = 30;
 let connectionAttempts = 1;
 
 
-function createWebSocket() {
+function createWebSocket(username) {
   let log = document.getElementById("log");
 
   sock = new WebSocket(URL);
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
-    sock.send("A new client has joined!");
+    sock.send(username + " has joined!");
   });
 
   sock.addEventListener("message", function(event) {
@@ -86,14 +86,16 @@ function createWebSocket() {
   });
 
   document.getElementById("send-button").onclick = function() {
-    sendMessage(sock);
+    if(document.getElementById("message").value.trim() != "") {
+      sendMessage(sock, username);
+    }
   };
 
   return sock;
 }
 
-function sendMessage(sock) {
-  let message = document.getElementById("message").value;
+function sendMessage(sock, username) {
+  let message = username + ": " + document.getElementById("message").value;
   sock.send(message);
   document.getElementById("message").value = "";
 }
@@ -112,21 +114,29 @@ function generateWaitTime(k) {
 }
 
 let sock;
+let username;
 
 window.addEventListener("load", function() {
-  sock = createWebSocket();
+  username = prompt("Enter your username");
+  sock = createWebSocket(username);
 });
 
 window.addEventListener("keydown", function(event) {
-    if(event.defaultPrevented) {
+  if(event.defaultPrevented) {
+    return;
+  }
+  switch(event.key) {
+    case "Enter":
+      if(document.getElementById("message").value.trim() != "") {
+        sendMessage(sock, username);
+      }
+      break;
+    default:
       return;
-    }
-    switch(event.key) {
-      case "Enter":
-        sendMessage(sock);
-        break;
-      default:
-        return;
-    }
-    event.preventDefault();
-  }, true);
+  }
+  event.preventDefault();
+}, true);
+
+window.addEventListener("unload", function(event) {
+  sock.send(username + " has left");
+});
