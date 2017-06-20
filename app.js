@@ -1,22 +1,37 @@
-const URL = "ws://localhost:8080";
-const MAX_WAIT_TIME = 30;
+var player;
 
 let connectionAttempts = 1;
 
+class Player {
+  constructor(username, sock) {
+    this.username = username;
+    this.sock = sock;
+  }
 
-function createWebSocket(username) {
+  sendMessage() {
+    let message = this.username + ": " + document.getElementById("message").value;
+    this.sock.send(message);
+    document.getElementById("message").value = "";
+  }
+}
+
+function createWebSocket() {
+  const URL = "ws://localhost:8080";
   let log = document.getElementById("log");
 
   sock = new WebSocket(URL);
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
-    sock.send(username + " has joined!");
+    sock.send(player.username + " has joined!");
   });
 
   sock.addEventListener("message", function(event) {
+    // let data = JSON.parse(event.data);
+    // let type = data.type;
     console.log(event.data);
     let message = document.createElement("p");
+    // message.className = "message joined";
     message.innerText = event.data;
     log.appendChild(message);
   });
@@ -81,26 +96,22 @@ function createWebSocket(username) {
     let waitTime = generateWaitTime(connectionAttempts);
     setTimeout(function() {
       connectionAttempts += 1;
-      createWebSocket();
+      player.sock = createWebSocket();
     }, waitTime);
   });
 
   document.getElementById("send-button").onclick = function() {
     if(document.getElementById("message").value.trim() != "") {
-      sendMessage(sock, username);
+      player.sendMessage();
     }
   };
 
   return sock;
 }
 
-function sendMessage(sock, username) {
-  let message = username + ": " + document.getElementById("message").value;
-  sock.send(message);
-  document.getElementById("message").value = "";
-}
-
 function generateWaitTime(k) {
+  const MAX_WAIT_TIME = 30;
+
   let waitTime = 1;
   for(let i = 0; i < k; i++) {
     waitTime *= 2;
@@ -113,12 +124,10 @@ function generateWaitTime(k) {
   return Math.random() * waitTime;
 }
 
-let sock;
-let username;
-
 window.addEventListener("load", function() {
   username = prompt("Enter your username");
-  sock = createWebSocket(username);
+  sock = createWebSocket();
+  player = new Player(username, sock);
 });
 
 window.addEventListener("keydown", function(event) {
@@ -128,7 +137,7 @@ window.addEventListener("keydown", function(event) {
   switch(event.key) {
     case "Enter":
       if(document.getElementById("message").value.trim() != "") {
-        sendMessage(sock, username);
+        player.sendMessage();
       }
       break;
     default:
@@ -138,5 +147,5 @@ window.addEventListener("keydown", function(event) {
 }, true);
 
 window.addEventListener("unload", function(event) {
-  sock.send(username + " has left");
+  sock.send(player.username + " has left");
 });
