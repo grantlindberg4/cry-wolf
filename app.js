@@ -9,9 +9,13 @@ class Player {
   }
 
   sendMessage() {
-    let message = this.username + ": " + document.getElementById("message").value;
-    this.sock.send(message);
-    document.getElementById("message").value = "";
+    let messageBox = document.getElementById("message");
+    let message = {
+      type: "chat",
+      message: this.username + ": " + messageBox.value
+    };
+    this.sock.send(JSON.stringify(message));
+    messageBox.value = "";
   }
 }
 
@@ -23,16 +27,33 @@ function createWebSocket() {
 
   sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
-    sock.send(player.username + " has joined!");
+    let message = {
+      type: "join",
+      message: player.username + " has joined!"
+    };
+    sock.send(JSON.stringify(message));
   });
 
   sock.addEventListener("message", function(event) {
-    // let data = JSON.parse(event.data);
-    // let type = data.type;
     console.log(event.data);
+    let data = JSON.parse(event.data);
+    let type = data.type;
     let message = document.createElement("p");
-    // message.className = "message joined";
-    message.innerText = event.data;
+    switch(type) {
+      case "join":
+        message.classList.add("join-message");
+        break;
+      case "leave":
+        message.classList.add("leave-message");
+        break;
+      case "chat":
+        message.classList.add("chat-message");
+        break;
+      default:
+        // Something went wrong
+        break;
+    }
+    message.innerText = data.message;
     log.appendChild(message);
   });
 
@@ -147,5 +168,9 @@ window.addEventListener("keydown", function(event) {
 }, true);
 
 window.addEventListener("unload", function(event) {
-  sock.send(player.username + " has left");
+  let message = {
+    type: "leave",
+    message: player.username + " has left!"
+  };
+  sock.send(JSON.stringify(message));
 });
