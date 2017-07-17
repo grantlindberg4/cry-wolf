@@ -1,15 +1,14 @@
-var player;
-
-let connectionAttempts = 1;
-
 class Player {
-  constructor(username, sock) {
+  username: string;
+  sock: WebSocket;
+
+  constructor(username: string, sock: WebSocket) {
     this.username = username;
     this.sock = sock;
   }
 
   sendMessage() {
-    let messageBox = document.getElementById("message");
+    let messageBox = (<HTMLInputElement>document.getElementById("message"));
     let message = {
       type: "chat",
       message: this.username + ": " + messageBox.value
@@ -19,22 +18,27 @@ class Player {
   }
 }
 
-function createWebSocket() {
+let connectionAttempts = 1;
+let player: Player;
+
+function createPlayer() {
   const URL = "ws://localhost:8080";
   let log = document.getElementById("log");
 
-  sock = new WebSocket(URL);
+  let username = <string>prompt("Enter your username");
+  let sock = new WebSocket(URL);
+  player = new Player(username, sock);
 
-  sock.addEventListener("open", function(event) {
+  player.sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
     let message = {
       type: "join",
       message: player.username + " has joined!"
     };
-    sock.send(JSON.stringify(message));
+    player.sock.send(JSON.stringify(message));
   });
 
-  sock.addEventListener("message", function(event) {
+  player.sock.addEventListener("message", function(event) {
     console.log(event.data);
     let data = JSON.parse(event.data);
     let type = data.type;
@@ -54,10 +58,11 @@ function createWebSocket() {
         break;
     }
     message.innerText = data.message;
+    let log = <HTMLElement>document.getElementById("log");
     log.appendChild(message);
   });
 
-  sock.addEventListener("close", function(e) {
+  player.sock.addEventListener("close", function(e) {
     let reason;
     switch(e.code) {
       case 1000:
@@ -117,20 +122,23 @@ function createWebSocket() {
     let waitTime = generateWaitTime(connectionAttempts);
     setTimeout(function() {
       connectionAttempts += 1;
-      player.sock = createWebSocket();
+      player = createPlayer();
     }, waitTime);
   });
 
-  document.getElementById("send-button").onclick = function() {
-    if(document.getElementById("message").value.trim() != "") {
+  let sendButton = <HTMLElement>document.getElementById("send-button");
+
+  sendButton.onclick = function() {
+    let messageBox = (<HTMLInputElement>document.getElementById("message"));
+    if(messageBox.value.trim() != "") {
       player.sendMessage();
     }
   };
 
-  return sock;
+  return player;
 }
 
-function generateWaitTime(k) {
+function generateWaitTime(k: number) {
   const MAX_WAIT_TIME = 30;
 
   let waitTime = 1;
@@ -146,9 +154,7 @@ function generateWaitTime(k) {
 }
 
 window.addEventListener("load", function() {
-  username = prompt("Enter your username");
-  sock = createWebSocket();
-  player = new Player(username, sock);
+  player = createPlayer();
 });
 
 window.addEventListener("keydown", function(event) {
@@ -157,7 +163,8 @@ window.addEventListener("keydown", function(event) {
   }
   switch(event.key) {
     case "Enter":
-      if(document.getElementById("message").value.trim() != "") {
+      let messageBox = (<HTMLInputElement>document.getElementById("message"));
+      if(messageBox.value.trim() != "") {
         player.sendMessage();
       }
       break;
@@ -172,5 +179,5 @@ window.addEventListener("unload", function(event) {
     type: "leave",
     message: player.username + " has left!"
   };
-  sock.send(JSON.stringify(message));
+  player.sock.send(JSON.stringify(message));
 });
