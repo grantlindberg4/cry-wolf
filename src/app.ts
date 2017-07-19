@@ -20,14 +20,26 @@ class Player {
 
 let connectionAttempts = 1;
 let player: Player;
+let timeRemaining = 10;
+
+function countDown() {
+  if(timeRemaining <= 0) {
+    // Time to transition to the character selection screen
+    return;
+  }
+  let timer = document.getElementById("timer")!;
+  let time = timer.children[0];
+  time.textContent = String(timeRemaining);
+  timeRemaining--;
+}
 
 function createPlayer() {
   const URL = "ws://localhost:8080";
-  let log = document.getElementById("log");
-
   let username = <string>prompt("Enter your username");
   let sock = new WebSocket(URL);
   player = new Player(username, sock);
+
+  let countDownInterval: NodeJS.Timer;
 
   player.sock.addEventListener("open", function(event) {
     connectionAttempts = 1;
@@ -38,11 +50,16 @@ function createPlayer() {
     player.sock.send(JSON.stringify(message));
   });
 
+  player.sock.addEventListener("error", function() {
+    console.log("An error has occurred with client: " + player.username);
+  });
+
   player.sock.addEventListener("message", function(event) {
     console.log(event.data);
     let data = JSON.parse(event.data);
     let type = data.type;
     let message = document.createElement("p");
+    let timer = document.getElementById("timer")!;
     switch(type) {
       case "join":
         message.classList.add("join-message");
@@ -53,12 +70,23 @@ function createPlayer() {
       case "chat":
         message.classList.add("chat-message");
         break;
+      case "startCountDown":
+        timer.style.visibility = "visible";
+        let time = document.createElement("h1");
+        timer.appendChild(time);
+        countDownInterval = setInterval(countDown, 1000);
+        return;
+      case "stopCountDown":
+        timer.style.visibility = "hidden";
+        clearInterval(countDownInterval);
+        timeRemaining = 10;
+        return;
       default:
         // Something went wrong
         break;
     }
     message.innerText = data.message;
-    let log = <HTMLElement>document.getElementById("log");
+    let log = document.getElementById("log")!;
     log.appendChild(message);
   });
 
