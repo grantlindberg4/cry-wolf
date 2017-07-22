@@ -6,61 +6,128 @@ type WebSocket = ws & {
   isAlive?: boolean
 };
 
-const server = new ws.Server({ port: 8080, clientTracking: true });
+class Player {
+  username: string;
+  sock: WebSocket;
+
+  constructor(username: string, sock: WebSocket) {
+    this.username = username;
+    this.sock = sock;
+  }
+}
+
+const server = new ws.Server({
+  port: 8080,
+  clientTracking: true
+});
 
 function heartbeat(this: WebSocket) {
   this.isAlive = true;
 }
 
-let numPlayers = 0;
+let players = new Array<Player>();
+
+function broadcast(message: string) {
+  for(let player of players) {
+    if(player.sock.readyState === ws.OPEN) {
+      player.sock.send(message);
+    }
+  }
+}
+
+const MAX_PLAYERS = 3;
 
 server.on("connection", function connection(sock: WebSocket) {
-  sock.isAlive = true;
-  sock.on("pong", heartbeat);
-  numPlayers++;
-  if(numPlayers >= 3) {
+  let player = new Player("", sock);
+  player.sock.isAlive = true;
+  player.sock.on("pong", heartbeat);
+
+  players.push(player);
+
+  if(players.length >= MAX_PLAYERS) {
     let message = {
       type: "startCountDown"
     };
-    server.clients.forEach(function each(client: WebSocket) {
-      if(client.readyState === ws.OPEN) {
-        client.send(JSON.stringify(message));
-      }
-    });
+    // server.clients.forEach(function each(client: WebSocket) {
+    //   if(client.readyState === ws.OPEN) {
+    //     client.send(JSON.stringify(message));
+    //   }
+    // });
+    broadcast(JSON.stringify(message));
+    // Make broadcast(message) for this for loop
   }
-  sock.on("message", function incoming(data: string) {
-    let info = JSON.parse(data);
-    info.message = info.message.substring(0, MAX_MESSAGE_LENGTH);
-    server.clients.forEach(function each(client: WebSocket) {
-      if(client.readyState === ws.OPEN) {
-        client.send(JSON.stringify(info));
-      }
-    });
+  player.sock.on("message", function incoming(data: string) {
+    // let info = JSON.parse(data);
+    // info.message = info.message.substring(0, MAX_MESSAGE_LENGTH);
+    // server.clients.forEach(function each(client: WebSocket) {
+    //   if(client.readyState === ws.OPEN) {
+    //     client.send(JSON.stringify(info));
+    //   }
+    // });
+    let message = JSON.parse(data);
+    switch(message.type) {
+      case "join":
+        player.username = message.username;
+        let joinMessage = {
+          type: "join",
+          message: player.username + " has joined!"
+        };
+        broadcast(JSON.stringify(joinMessage));
+        break;
+      case "chat":
+        message.message = message.message.substring(0, MAX_MESSAGE_LENGTH);
+        message.message = player.username + ": " + message.message;
+        broadcast(JSON.stringify(message));
+        break;
+      default:
+        // Something went wrong
+        break;
+    }
   });
 
-  sock.on("close", function() {
-    numPlayers--;
+  player.sock.on("close", function() {
     let message = {
-      type: "stopCountDown"
+      type: "leave",
+      message: player.username + " has left!"
     };
-    server.clients.forEach(function each(client: WebSocket) {
-      if(client.readyState === ws.OPEN) {
-        client.send(JSON.stringify(message));
-      }
-    });
+    broadcast(JSON.stringify(message));
+
+    let i = players.indexOf(player);
+    players.splice(i, 1);
+
+    // Should always be the case, but performing check regardless
+    if(players.length < MAX_PLAYERS) {
+      let message = {
+        type: "stopCountDown"
+      };
+      broadcast(JSON.stringify(message));
+    }
+    // server.clients.forEach(function each(client: WebSocket) {
+    //   if(client.readyState === ws.OPEN) {
+    //     client.send(JSON.stringify(message));
+    //   }
+    // });
   });
 });
 
 server.on("error", function(e) {
   console.log("The server has experienced an error and has shut down");
+  server.close()
 });
 
 const playerCountInterval = setInterval(function ping() {
-  server.clients.forEach(function each(sock: WebSocket) {
-    if(!sock.isAlive) {
-      return sock.close();
+  // server.clients.forEach(function each(sock: WebSocket) {
+  //   if(!sock.isAlive) {
+  //     return sock.close();
+  //   }
+  //   sock.isAlive = false;
+  //   sock.ping("", false, true);
+  // });
+  for(let player of players) {
+    if(!player.sock.isAlive) {
+      return player.sock.close();
     }
-    sock.isAlive = false;
-    sock.ping("", false, true);
-  });
+    player.sock.isAlive = false;
+    player.sock.ping("", false, true);
+  }
 }, 1000);
