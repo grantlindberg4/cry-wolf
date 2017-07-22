@@ -61,6 +61,10 @@ function createWebSocket() {
         clearInterval(countDownInterval);
         timeRemaining = 10;
         return;
+      case "fullLobby":
+        alert(data.message);
+        sock.close();
+        return;
       default:
         // Something went wrong
         break;

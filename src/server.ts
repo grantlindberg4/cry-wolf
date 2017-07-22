@@ -38,13 +38,24 @@ function broadcast(message: string) {
 const MAX_PLAYERS = 3;
 
 server.on("connection", function connection(sock: WebSocket) {
+  if(players.length >= MAX_PLAYERS) {
+    let message = {
+      type: "fullLobby",
+      message: "Sorry, this lobby is currently full. Please try again later."
+    };
+    sock.send(JSON.stringify(message));
+    sock.close();
+    return;
+  }
+
   let player = new Player("", sock);
+  // Consider moving this to the constructor of Player
   player.sock.isAlive = true;
   player.sock.on("pong", heartbeat);
 
   players.push(player);
 
-  if(players.length >= MAX_PLAYERS) {
+  if(players.length == MAX_PLAYERS) {
     let message = {
       type: "startCountDown"
     };
