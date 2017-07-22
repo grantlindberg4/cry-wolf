@@ -48,22 +48,9 @@ server.on("connection", function connection(sock: WebSocket) {
     let message = {
       type: "startCountDown"
     };
-    // server.clients.forEach(function each(client: WebSocket) {
-    //   if(client.readyState === ws.OPEN) {
-    //     client.send(JSON.stringify(message));
-    //   }
-    // });
     broadcast(JSON.stringify(message));
-    // Make broadcast(message) for this for loop
   }
   player.sock.on("message", function incoming(data: string) {
-    // let info = JSON.parse(data);
-    // info.message = info.message.substring(0, MAX_MESSAGE_LENGTH);
-    // server.clients.forEach(function each(client: WebSocket) {
-    //   if(client.readyState === ws.OPEN) {
-    //     client.send(JSON.stringify(info));
-    //   }
-    // });
     let message = JSON.parse(data);
     switch(message.type) {
       case "join":
@@ -102,11 +89,6 @@ server.on("connection", function connection(sock: WebSocket) {
       };
       broadcast(JSON.stringify(message));
     }
-    // server.clients.forEach(function each(client: WebSocket) {
-    //   if(client.readyState === ws.OPEN) {
-    //     client.send(JSON.stringify(message));
-    //   }
-    // });
   });
 });
 
@@ -116,13 +98,6 @@ server.on("error", function(e) {
 });
 
 const playerCountInterval = setInterval(function ping() {
-  // server.clients.forEach(function each(sock: WebSocket) {
-  //   if(!sock.isAlive) {
-  //     return sock.close();
-  //   }
-  //   sock.isAlive = false;
-  //   sock.ping("", false, true);
-  // });
   for(let player of players) {
     if(!player.sock.isAlive) {
       return player.sock.close();
