@@ -1,0 +1,44 @@
+#timer {
+  text-align: center;
+  vertical-align: middle;
+  margin: -2%;
+  visibility: hidden;
+  font-weight: bold;
+}
+#log {
+  width: 400px;
+  height: 475px;
+  word-wrap: break-word;
+  overflow-y: auto;
+  margin: 0 auto;
+  font-family: monospace;
+  border: 5px solid black;
+  border-radius: 7px;
+}
+.user-input {
+  height: 100px;
+  margin: 50px auto;
+}
+.chat-message {
+  font-style: normal;
+}
+.join-message {
+    font-style: italic;
+}
+.leave-message {
+  font-style: italic;
+}
+#message {
+  height: 75px;
+  width: 300px;
+  font-size: 12pt;
+  font-style: normal;
+  font-family: monospace;
+  resize: none;
+}
+.messaging-system {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
