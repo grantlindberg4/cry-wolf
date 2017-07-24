@@ -1,4 +1,3 @@
-let connectionAttempts = 1;
 let timeRemaining = 10;
 
 function countDown() {
@@ -22,7 +21,6 @@ function createWebSocket() {
   let countDownInterval: NodeJS.Timer;
 
   sock.addEventListener("open", function(event) {
-    connectionAttempts = 1;
     let message = {
       type: "join",
       username: username
@@ -32,6 +30,7 @@ function createWebSocket() {
 
   sock.addEventListener("error", function() {
     console.log("An error has occurred with client: " + username);
+    alert("The server is currently unavailable. Please try later.");
   });
 
   sock.addEventListener("message", function(event) {
@@ -131,17 +130,13 @@ function createWebSocket() {
     }
     console.log("Error: " + reason);
 
-    let waitTime = generateWaitTime(connectionAttempts);
-    setTimeout(function() {
-      connectionAttempts += 1;
-      sock = createWebSocket();
-    }, waitTime);
+    window.location.replace("index.html");
   });
 
   let sendButton = <HTMLElement>document.getElementById("send-button");
 
   sendButton.onclick = function() {
-    let messageBox = (<HTMLInputElement>document.getElementById("message"));
+    let messageBox = <HTMLInputElement>document.getElementById("message");
     if(messageBox.value.trim() != "") {
       let message = {
         type: "chat",
@@ -152,22 +147,13 @@ function createWebSocket() {
     }
   };
 
+  let exitButton = <HTMLElement>document.getElementById("exit-button");
+
+  exitButton.onclick = function() {
+    window.location.replace("index.html");
+  };
+
   return sock;
-}
-
-function generateWaitTime(k: number) {
-  const MAX_WAIT_TIME = 30;
-
-  let waitTime = 1;
-  for(let i = 0; i < k; i++) {
-    waitTime *= 2;
-  }
-  waitTime = (waitTime - 1)*1000;
-  if(waitTime > MAX_WAIT_TIME*1000) {
-    waitTime = MAX_WAIT_TIME*1000;
-  }
-
-  return Math.random() * waitTime;
 }
 
 window.addEventListener("load", function() {
@@ -181,7 +167,7 @@ window.addEventListener("keydown", function(event) {
   }
   switch(event.key) {
     case "Enter":
-      let messageBox = (<HTMLInputElement>document.getElementById("message"));
+      let messageBox = <HTMLInputElement>document.getElementById("message");
       if(messageBox.value.trim() != "") {
         let message = {
           type: "chat",

@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>Cry Wolf</title>
+    <title>Cry Wolf - Game</title>
     <link rel="stylesheet" type="text/css" href="style/game.css" />
-    <script src="build/app.js"></script>
+    <script src="build/game.js"></script>
   </head>
   <body>
     <div id="timer"></div>
@@ -12,8 +12,11 @@
       <div id="log"></div>
       <div class="user-input">
         <textarea id="message" wrap="hard" maxlength="300"></textarea>
-        <button id="send-button">Submit</button>
+        <button id="send-button" type="button">Submit</button>
       </div>
+    </div>
+    <div class="system-controls">
+      <button id="exit-button" type="button">Exit</button>
     </div>
   </body>
 </html>
