@@ -1,24 +1,9 @@
-let timeRemaining = 10;
-
-function countDown() {
-  if(timeRemaining <= 0) {
-    // Time to transition to the character selection screen
-    return;
-  }
-  let timer = document.getElementById("timer")!;
-  let time = timer.children[0];
-  time.textContent = String(timeRemaining);
-  timeRemaining--;
-}
-
 let sock: WebSocket;
 let username: string;
 
 function createWebSocket() {
   const URL = "ws://localhost:8080";
   sock = new WebSocket(URL);
-
-  let countDownInterval: NodeJS.Timer;
 
   sock.addEventListener("open", function(event) {
     let message = {
@@ -39,6 +24,7 @@ function createWebSocket() {
     let type = data.type;
     let message = document.createElement("p");
     let timer = document.getElementById("timer")!;
+    let time;
     switch(type) {
       case "join":
         message.classList.add("join-message");
@@ -51,14 +37,15 @@ function createWebSocket() {
         break;
       case "startCountDown":
         timer.style.visibility = "visible";
-        let time = document.createElement("h1");
+        time = document.createElement("h1");
         timer.appendChild(time);
-        countDownInterval = setInterval(countDown, 1000);
         return;
       case "stopCountDown":
         timer.style.visibility = "hidden";
-        clearInterval(countDownInterval);
-        timeRemaining = 10;
+        return;
+      case "tick":
+        time = timer.children[0];
+        time.textContent = data.time;
         return;
       case "fullLobby":
         alert(data.message);

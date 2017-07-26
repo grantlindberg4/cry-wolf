@@ -1,3 +1,5 @@
+// Note: setTimeout(), setInterval(), and clearInterval() may be obsolete soon
+// in modern browsers
 import * as ws from "ws";
 
 const MAX_MESSAGE_LENGTH = 300;
@@ -20,6 +22,22 @@ const server = new ws.Server({
   port: 8080,
   clientTracking: true
 });
+
+let timeRemaining = 10;
+let countDownInterval: NodeJS.Timer;
+
+function countDown() {
+  if(timeRemaining <= 0) {
+    // Time to transition to the character selection screen
+    return;
+  }
+  let message = {
+    type: "tick",
+    time: String(timeRemaining)
+  };
+  broadcast(JSON.stringify(message));
+  timeRemaining--;
+}
 
 function heartbeat(this: WebSocket) {
   this.isAlive = true;
@@ -60,6 +78,7 @@ server.on("connection", function connection(sock: WebSocket) {
       type: "startCountDown"
     };
     broadcast(JSON.stringify(message));
+    countDownInterval = setInterval(countDown, 1000);
   }
   player.sock.on("message", function incoming(data: string) {
     let message = JSON.parse(data);
@@ -99,6 +118,8 @@ server.on("connection", function connection(sock: WebSocket) {
         type: "stopCountDown"
       };
       broadcast(JSON.stringify(message));
+      clearInterval(countDownInterval);
+      timeRemaining = 10;
     }
   });
 });
