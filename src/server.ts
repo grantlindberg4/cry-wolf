@@ -2,7 +2,9 @@
 // in modern browsers
 import * as ws from "ws";
 
+const MAX_PLAYERS = 3;
 const MAX_MESSAGE_LENGTH = 300;
+const MAX_TIME_UNTIL_GAME_START = 10;
 
 type WebSocket = ws & {
   isAlive?: boolean
@@ -15,20 +17,27 @@ class Player {
   constructor(username: string, sock: WebSocket) {
     this.username = username;
     this.sock = sock;
+
+    this.sock.isAlive = true;
+    this.sock.on("pong", heartbeat);
   }
 }
 
-const server = new ws.Server({
-  port: 8080,
-  clientTracking: true
-});
+function broadcast(message: string) {
+  for(let player of players) {
+    if(player.sock.readyState === ws.OPEN) {
+      player.sock.send(message);
+    }
+  }
+}
 
-let timeRemaining = 10;
+let timeRemaining: number;
 let countDownInterval: NodeJS.Timer;
 
 function countDown() {
   if(timeRemaining <= 0) {
     // Time to transition to the character selection screen
+    clearInterval(countDownInterval);
     return;
   }
   let message = {
@@ -39,21 +48,12 @@ function countDown() {
   timeRemaining--;
 }
 
-function heartbeat(this: WebSocket) {
-  this.isAlive = true;
-}
-
 let players = new Array<Player>();
 
-function broadcast(message: string) {
-  for(let player of players) {
-    if(player.sock.readyState === ws.OPEN) {
-      player.sock.send(message);
-    }
-  }
-}
-
-const MAX_PLAYERS = 3;
+const server = new ws.Server({
+  port: 8080,
+  clientTracking: true
+});
 
 server.on("connection", function connection(sock: WebSocket) {
   if(players.length >= MAX_PLAYERS) {
@@ -67,10 +67,6 @@ server.on("connection", function connection(sock: WebSocket) {
   }
 
   let player = new Player("", sock);
-  // Consider moving this to the constructor of Player
-  player.sock.isAlive = true;
-  player.sock.on("pong", heartbeat);
-
   players.push(player);
 
   if(players.length == MAX_PLAYERS) {
@@ -78,8 +74,10 @@ server.on("connection", function connection(sock: WebSocket) {
       type: "startCountDown"
     };
     broadcast(JSON.stringify(message));
+    timeRemaining = MAX_TIME_UNTIL_GAME_START;
     countDownInterval = setInterval(countDown, 1000);
   }
+
   player.sock.on("message", function incoming(data: string) {
     let message = JSON.parse(data);
     switch(message.type) {
@@ -119,7 +117,6 @@ server.on("connection", function connection(sock: WebSocket) {
       };
       broadcast(JSON.stringify(message));
       clearInterval(countDownInterval);
-      timeRemaining = 10;
     }
   });
 });
@@ -128,6 +125,10 @@ server.on("error", function(e) {
   console.log("The server has experienced an error and has shut down");
   server.close()
 });
+
+function heartbeat(this: WebSocket) {
+  this.isAlive = true;
+}
 
 const playerCountInterval = setInterval(function ping() {
   for(let player of players) {

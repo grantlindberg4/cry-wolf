@@ -1,9 +1,6 @@
-let sock: WebSocket;
-let username: string;
-
-function createWebSocket() {
+function createWebSocket(username: string) {
   const URL = "ws://localhost:8080";
-  sock = new WebSocket(URL);
+  let sock = new WebSocket(URL);
 
   sock.addEventListener("open", function(event) {
     let message = {
@@ -143,9 +140,11 @@ function createWebSocket() {
   return sock;
 }
 
+let sock: WebSocket;
+
 window.addEventListener("load", function() {
-  username = <string>prompt("Enter your username");
-  sock = createWebSocket();
+  let username = <string>prompt("Enter your username");
+  sock = createWebSocket(username);
 });
 
 window.addEventListener("keydown", function(event) {
