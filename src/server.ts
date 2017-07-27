@@ -3,14 +3,15 @@
 import * as ws from "ws";
 
 const MAX_PLAYERS = 3;
+const NUM_WOLVES = 1;
+const NUM_SHEEP = 2;
+
 const MAX_MESSAGE_LENGTH = 300;
 const MAX_TIME_UNTIL_GAME_START = 10;
 
 type WebSocket = ws & {
   isAlive?: boolean
 };
-
-let players = new Array<Player>();
 
 enum Role {
   Sheep = "Sheep",
@@ -33,7 +34,9 @@ class Player {
   }
 }
 
-const MAX_WOLVES = 1;
+let players = new Array<Player>();
+let sheep = new Array<Player>();
+let wolves = new Array<Player>();
 
 class Game {
   inProgress: boolean;
@@ -41,15 +44,34 @@ class Game {
 
   constructor() {
     this.inProgress = false;
-    this.roles = new Array<Role>();
+    this.roles = this.createRoleList();
+  }
 
-    for(let i = 0; i < MAX_WOLVES; i++) {
-      this.roles.push(Role.Wolf);
+  start() {
+    this.inProgress = true;
+    this.shuffleRoles();
+    this.assignRoles();
+
+    let message = {
+      message: "You are a Sheep!"
+    }
+    broadcast(sheep, JSON.stringify(message));
+    message = {
+      message: "Stay hidden...you are a wolf."
+    }
+    broadcast(wolves, JSON.stringify(message));
+  }
+
+  createRoleList() {
+    let roles = new Array<Role>();
+    for(let i = 0; i < NUM_WOLVES; i++) {
+      roles.push(Role.Wolf);
+    }
+    for(let i = 0; i < NUM_SHEEP; i++) {
+      roles.push(Role.Sheep);
     }
 
-    for(let i = 0; i < MAX_PLAYERS - MAX_WOLVES; i++) {
-      this.roles.push(Role.Sheep);
-    }
+    return roles;
   }
 
   shuffleRoles() {
@@ -63,14 +85,25 @@ class Game {
 
   assignRoles() {
     for(let i = 0; i < this.roles.length; i++) {
-      players[i].role = this.roles[i];
-      console.log("Player: " + players[i].username + ", " + "Role: " + String(this.roles[i]));
+      let role = this.roles[i]
+      players[i].role = role;
+      switch(role) {
+        case Role.Sheep:
+          sheep.push(players[i]);
+          break;
+        case Role.Wolf:
+          wolves.push(players[i]);
+          break;
+        default:
+          // Something went wrong
+          break;
+      }
     }
   }
 }
 
-function broadcast(message: string) {
-  for(let player of players) {
+function broadcast(channel: Array<Player>, message: string) {
+  for(let player of channel) {
     if(player.sock.readyState === ws.OPEN) {
       player.sock.send(message);
     }
@@ -83,17 +116,15 @@ let game = new Game();
 
 function countDown() {
   if(timeRemaining <= 0) {
-    game.inProgress = true;
-    game.shuffleRoles();
-    game.assignRoles();
     clearInterval(countDownInterval);
+    game.start();
     return;
   }
   let message = {
     type: "tick",
     time: String(timeRemaining)
   };
-  broadcast(JSON.stringify(message));
+  broadcast(players, JSON.stringify(message));
   timeRemaining--;
 }
 
@@ -120,7 +151,7 @@ server.on("connection", function connection(sock: WebSocket) {
     let message = {
       type: "startCountDown"
     };
-    broadcast(JSON.stringify(message));
+    broadcast(players, JSON.stringify(message));
     timeRemaining = MAX_TIME_UNTIL_GAME_START;
     countDownInterval = setInterval(countDown, 1000);
   }
@@ -134,12 +165,13 @@ server.on("connection", function connection(sock: WebSocket) {
           type: "join",
           message: player.username + " has joined!"
         };
-        broadcast(JSON.stringify(joinMessage));
+        broadcast(players, JSON.stringify(joinMessage));
         break;
       case "chat":
+        // Consider using a switch statement to determine the channel
         message.message = message.message.substring(0, MAX_MESSAGE_LENGTH);
         message.message = player.username + ": " + message.message;
-        broadcast(JSON.stringify(message));
+        broadcast(players, JSON.stringify(message));
         break;
       default:
         // Something went wrong
@@ -152,7 +184,7 @@ server.on("connection", function connection(sock: WebSocket) {
       type: "leave",
       message: player.username + " has left!"
     };
-    broadcast(JSON.stringify(message));
+    broadcast(players, JSON.stringify(message));
 
     let i = players.indexOf(player);
     players.splice(i, 1);
@@ -162,7 +194,7 @@ server.on("connection", function connection(sock: WebSocket) {
       let message = {
         type: "stopCountDown"
       };
-      broadcast(JSON.stringify(message));
+      broadcast(players, JSON.stringify(message));
       clearInterval(countDownInterval);
     }
   });
