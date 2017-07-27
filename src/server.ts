@@ -10,16 +10,62 @@ type WebSocket = ws & {
   isAlive?: boolean
 };
 
+let players = new Array<Player>();
+
+enum Role {
+  Sheep = "Sheep",
+  Wolf = "Wolf",
+  None = "None"
+}
+
 class Player {
   username: string;
   sock: WebSocket;
+  role: Role;
 
   constructor(username: string, sock: WebSocket) {
     this.username = username;
     this.sock = sock;
+    this.role = Role.None;
 
     this.sock.isAlive = true;
     this.sock.on("pong", heartbeat);
+  }
+}
+
+const MAX_WOLVES = 1;
+
+class Game {
+  inProgress: boolean;
+  roles: Array<Role>;
+
+  constructor() {
+    this.inProgress = false;
+    this.roles = new Array<Role>();
+
+    for(let i = 0; i < MAX_WOLVES; i++) {
+      this.roles.push(Role.Wolf);
+    }
+
+    for(let i = 0; i < MAX_PLAYERS - MAX_WOLVES; i++) {
+      this.roles.push(Role.Sheep);
+    }
+  }
+
+  shuffleRoles() {
+    for(let i = 0; i < this.roles.length; i++) {
+      let temp = this.roles[i];
+      let j = Math.floor(Math.random() * this.roles.length);
+      this.roles[i] = this.roles[j];
+      this.roles[j] = temp;
+    }
+  }
+
+  assignRoles() {
+    for(let i = 0; i < this.roles.length; i++) {
+      players[i].role = this.roles[i];
+      console.log("Player: " + players[i].username + ", " + "Role: " + String(this.roles[i]));
+    }
   }
 }
 
@@ -33,10 +79,13 @@ function broadcast(message: string) {
 
 let timeRemaining: number;
 let countDownInterval: NodeJS.Timer;
+let game = new Game();
 
 function countDown() {
   if(timeRemaining <= 0) {
-    // Time to transition to the character selection screen
+    game.inProgress = true;
+    game.shuffleRoles();
+    game.assignRoles();
     clearInterval(countDownInterval);
     return;
   }
@@ -48,15 +97,13 @@ function countDown() {
   timeRemaining--;
 }
 
-let players = new Array<Player>();
-
 const server = new ws.Server({
   port: 8080,
   clientTracking: true
 });
 
 server.on("connection", function connection(sock: WebSocket) {
-  if(players.length >= MAX_PLAYERS) {
+  if(players.length >= MAX_PLAYERS || game.inProgress) {
     let message = {
       type: "fullLobby",
       message: "Sorry, this lobby is currently full. Please try again later."
