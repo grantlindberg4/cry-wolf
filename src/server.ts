@@ -117,7 +117,13 @@ let game = new Game();
 function countDown() {
   if(timeRemaining <= 0) {
     clearInterval(countDownInterval);
-    game.start();
+    let message = {
+      type: "stopCountDown"
+    };
+    broadcast(players, JSON.stringify(message));
+    if(!game.inProgress) {
+      game.start();
+    }
     return;
   }
   let message = {
