@@ -1,5 +1,6 @@
 // Note: setTimeout(), setInterval(), and clearInterval() may be obsolete soon
 // in modern browsers
+
 import * as ws from "ws";
 
 const MAX_PLAYERS = 3;
@@ -7,7 +8,12 @@ const NUM_WOLVES = 1;
 const NUM_SHEEP = 2;
 
 const MAX_MESSAGE_LENGTH = 300;
-const MAX_TIME_UNTIL_GAME_START = 10;
+
+const SECOND = 1000;
+const TIME_UNTIL_GAME_START = 10;
+const DAY_DURATION = 7;
+const SUDDEN_DEATH_DURATION = 15;
+const NIGHT_DURATION = 25;
 
 type WebSocket = ws & {
   isAlive?: boolean
@@ -17,6 +23,14 @@ enum Role {
   Sheep = "Sheep",
   Wolf = "Wolf",
   None = "None"
+}
+
+enum Phase {
+  PreGame,
+  Day,
+  SuddenDeath,
+  Night,
+  PostGame
 }
 
 class Player {
@@ -38,17 +52,20 @@ let players = new Array<Player>();
 let sheep = new Array<Player>();
 let wolves = new Array<Player>();
 
+let countDownInterval: NodeJS.Timer;
+
 class Game {
-  inProgress: boolean;
+  phase: Phase;
   roles: Array<Role>;
+  timeRemaining: number;
 
   constructor() {
-    this.inProgress = false;
+    this.phase = Phase.PreGame;
     this.roles = this.createRoleList();
+    this.timeRemaining = TIME_UNTIL_GAME_START;
   }
 
   start() {
-    this.inProgress = true;
     this.shuffleRoles();
     this.assignRoles();
 
@@ -100,6 +117,62 @@ class Game {
       }
     }
   }
+
+  cyclePhase() {
+    // Use types for the messages to help hide/reveal elements for the players
+    // for each phase respectively
+    let message;
+    switch(this.phase) {
+      case Phase.PreGame:
+        this.start();
+        this.phase = Phase.Day;
+        message = {
+          message: "It is day. Find the wolves before time runs out!"
+        };
+        broadcast(players, JSON.stringify(message));
+        this.timeRemaining = DAY_DURATION;
+        break;
+      case Phase.Day:
+        this.phase = Phase.SuddenDeath;
+        message = {
+          message: "It is sudden death. Good luck..."
+        };
+        broadcast(players, JSON.stringify(message));
+        this.timeRemaining = SUDDEN_DEATH_DURATION;
+        break;
+      case Phase.SuddenDeath:
+        this.phase = Phase.Night;
+        message = {
+          message: "It is night, and the wolves are hunting..."
+        };
+        broadcast(players, JSON.stringify(message));
+        this.timeRemaining = NIGHT_DURATION;
+        break;
+      case Phase.Night:
+        this.phase = Phase.Day;
+        message = {
+          message: "It is day. Find the wolves before time runs out!"
+        };
+        broadcast(players, JSON.stringify(message));
+        this.timeRemaining = DAY_DURATION;
+        break;
+      case Phase.PostGame:
+        // Don't forget to broadcast the winning team
+        message = {
+          message: "The game is over"
+        };
+        broadcast(players, JSON.stringify(message));
+        break;
+      default:
+        // Oh, fuck...
+        break;
+    }
+    message = {
+      type: "startCountDown"
+    };
+    broadcast(players, JSON.stringify(message));
+    countDownInterval = setInterval(countDown, SECOND);
+  }
 }
 
 function broadcast(channel: Array<Player>, message: string) {
@@ -110,28 +183,24 @@ function broadcast(channel: Array<Player>, message: string) {
   }
 }
 
-let timeRemaining: number;
-let countDownInterval: NodeJS.Timer;
 let game = new Game();
 
 function countDown() {
-  if(timeRemaining <= 0) {
+  if(game.timeRemaining <= 0) {
     clearInterval(countDownInterval);
     let message = {
       type: "stopCountDown"
     };
     broadcast(players, JSON.stringify(message));
-    if(!game.inProgress) {
-      game.start();
-    }
+    game.cyclePhase();
     return;
   }
   let message = {
     type: "tick",
-    time: String(timeRemaining)
+    time: String(game.timeRemaining)
   };
   broadcast(players, JSON.stringify(message));
-  timeRemaining--;
+  game.timeRemaining--;
 }
 
 const server = new ws.Server({
@@ -140,7 +209,9 @@ const server = new ws.Server({
 });
 
 server.on("connection", function connection(sock: WebSocket) {
-  if(players.length >= MAX_PLAYERS || game.inProgress) {
+  // Consider breaking this into two different if() statements to send a unique
+  // message
+  if(players.length >= MAX_PLAYERS || game.phase != Phase.PreGame) {
     let message = {
       type: "fullLobby",
       message: "Sorry, this lobby is currently full. Please try again later."
@@ -158,8 +229,7 @@ server.on("connection", function connection(sock: WebSocket) {
       type: "startCountDown"
     };
     broadcast(players, JSON.stringify(message));
-    timeRemaining = MAX_TIME_UNTIL_GAME_START;
-    countDownInterval = setInterval(countDown, 1000);
+    countDownInterval = setInterval(countDown, SECOND);
   }
 
   player.sock.on("message", function incoming(data: string) {
@@ -195,11 +265,11 @@ server.on("connection", function connection(sock: WebSocket) {
     let i = players.indexOf(player);
     players.splice(i, 1);
 
-    // Should always be the case, but performing check regardless
-    if(players.length < MAX_PLAYERS) {
+    if(players.length < MAX_PLAYERS && game.phase == Phase.PreGame) {
       let message = {
         type: "stopCountDown"
       };
+      game.timeRemaining = TIME_UNTIL_GAME_START;
       broadcast(players, JSON.stringify(message));
       clearInterval(countDownInterval);
     }
@@ -223,4 +293,4 @@ const playerCountInterval = setInterval(function ping() {
     player.sock.isAlive = false;
     player.sock.ping("", false, true);
   }
-}, 1000);
+}, SECOND);
