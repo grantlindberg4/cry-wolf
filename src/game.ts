@@ -16,11 +16,14 @@ function createWebSocket(username: string) {
   });
 
   sock.addEventListener("message", function(event) {
-    console.log(event.data);
+    // console.log(event.data);
     let data = JSON.parse(event.data);
     let type = data.type;
     let message = document.createElement("p");
     let timer = document.getElementById("timer")!;
+    let characters = document.getElementsByClassName("character");
+    let character;
+    let i;
     let time;
     switch(type) {
       case "join":
@@ -32,6 +35,29 @@ function createWebSocket(username: string) {
       case "chat":
         message.classList.add("chat-message");
         break;
+      case "showCharacters":
+        for(let i = 0; i < characters.length; i++) {
+          character = <HTMLElement>characters[i];
+          character.style.display = "flex";
+        }
+        return;
+      case "phaseAnnouncement":
+        message.classList.add("phase-announcement");
+        break;
+      case "characterSelection":
+        i = data.index;
+        character = <HTMLElement>characters[i];
+        character.style.borderWidth = "20px";
+        character.style.borderColor = "Orange";
+        console.log(event.data);
+        return;
+      case "characterDeselection":
+        i = data.index;
+        character = <HTMLElement>characters[i];
+        character.style.borderWidth = "0px";
+        character.style.borderColor = "White";
+        console.log(event.data);
+        return;
       case "startCountDown":
         timer.style.visibility = "visible";
         time = document.createElement("h1");
@@ -43,6 +69,24 @@ function createWebSocket(username: string) {
       case "tick":
         time = timer.children[0];
         time.textContent = data.time;
+        return;
+      case "roleAssignment":
+        message.classList.add("role-assignment");
+        break;
+      case "gameStart":
+        let selectedCharacters = data.characters;
+        for(let i = 0; i < characters.length; i++) {
+          console.log("gameStart " + i);
+          let currentCharacter = <HTMLElement>characters[i];
+          if(selectedCharacters[i]) {
+            currentCharacter.style.display = "none";
+          }
+          else {
+            currentCharacter.style.borderWidth = "0px";
+            currentCharacter.style.borderColor = "White";
+          }
+        }
+        console.log(event.data);
         return;
       case "fullLobby":
         alert(data.message);
@@ -117,8 +161,8 @@ function createWebSocket(username: string) {
     window.location.replace("index.html");
   });
 
+  // Change onclick to be event listener for consistency
   let sendButton = <HTMLElement>document.getElementById("send-button");
-
   sendButton.onclick = function() {
     let messageBox = <HTMLInputElement>document.getElementById("message");
     if(messageBox.value.trim() != "") {
@@ -132,10 +176,23 @@ function createWebSocket(username: string) {
   };
 
   let exitButton = <HTMLElement>document.getElementById("exit-button");
-
   exitButton.onclick = function() {
     window.location.replace("index.html");
   };
+
+  let characters = document.getElementsByClassName("character");
+  console.log("Num characters " + characters.length);
+  for(let i = 0; i < characters.length; i++) {
+    let character = <HTMLElement>characters[i];
+    character.onclick = function() {
+      let message = {
+        type: "characterSelection",
+        index: i
+      };
+      sock.send(JSON.stringify(message));
+      console.log("Set up " + i);
+    }
+  }
 
   return sock;
 }
@@ -143,6 +200,7 @@ function createWebSocket(username: string) {
 let sock: WebSocket;
 
 window.addEventListener("load", function() {
+  // Make sure the username cannot be empty string
   let username = <string>prompt("Enter your username");
   sock = createWebSocket(username);
 });

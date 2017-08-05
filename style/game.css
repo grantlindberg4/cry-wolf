@@ -1,9 +1,152 @@
+body {
+  background: black;
+}
+
+#characters {
+  margin-left: 50%;
+  margin-top: 10%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.character {
+  display: none;
+  text-align: justify;
+  word-wrap: break-word;
+  color: black;
+  font-size: 20px;
+  font-family: monospace;
+}
+
+#campus-police-cop {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#hottie {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#gossip {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#new-guy {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#angel {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#narcissist {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#teacher {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#insider {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#stud {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#individual {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#good-girl {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#texan {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#actor {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#townie {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
+#ra {
+  width: 125px;
+  height: 75px;
+  border-radius: 15px;
+  margin: 15px 15px;
+  background: white;
+}
+
 #timer {
   text-align: center;
   vertical-align: middle;
   margin: -2%;
   visibility: hidden;
   font-weight: bold;
+  color: yellow;
 }
 #log {
   width: 400px;
@@ -12,20 +155,32 @@
   overflow-y: auto;
   margin: 0 auto;
   font-family: monospace;
-  border: 5px solid black;
+  border: 5px solid white;
   border-radius: 7px;
+  background-color: black
 }
 .user-input {
   height: 100px;
   margin: 50px auto;
 }
 .chat-message {
+  color: yellow;
   font-style: normal;
 }
 .join-message {
-    font-style: italic;
+  color: yellow;
+  font-style: italic;
 }
 .leave-message {
+  color: yellow;
+  font-style: italic;
+}
+.role-assignment {
+  color: yellow;
+  font-style: italic;
+}
+.phase-announcement {
+  color: yellow;
   font-style: italic;
 }
 #message {
@@ -34,12 +189,16 @@
   font-size: 12pt;
   font-style: normal;
   font-family: monospace;
+  border: 5px solid white;
+  border-radius: 7px;
+  color: yellow;
+  background-color: black;
   resize: none;
 }
 .messaging-system {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 20%;
   transform: translate(-50%, -50%);
 }
 
