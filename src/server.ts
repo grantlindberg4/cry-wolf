@@ -13,7 +13,7 @@ const MAX_MESSAGE_LENGTH = 300;
 
 const SECOND = 1000;
 const TIME_UNTIL_GAME_START = 10;
-const CHARACTER_SELECTION_DURATION = 15;
+const CHARACTER_SELECTION_DURATION = 30;
 const DAY_DURATION = 7;
 const SUDDEN_DEATH_DURATION = 15;
 const NIGHT_DURATION = 25;
@@ -53,10 +53,6 @@ class Player {
       if(characters[i]) {
         this.character = i;
         characters[i] = false;
-        let message = {
-          type: "characterSelection",
-          index: this.character
-        };
         break;
       }
     }
@@ -158,6 +154,15 @@ class Game {
           type: "showCharacters"
         };
         broadcast(players, JSON.stringify(message));
+        for(let i = 0; i < characters.length; i++) {
+          if(!characters[i]) {
+            message = {
+              type: "characterSelection",
+              index: i
+            };
+            broadcast(players, JSON.stringify(message));
+          }
+        }
         this.timeRemaining = CHARACTER_SELECTION_DURATION;
         break;
       case Phase.CharacterSelection:
@@ -218,6 +223,8 @@ class Game {
 }
 
 // Consider adding this to the game class
+// Here is where information from chat messages will be copied into the
+// transcript
 function broadcast(channel: Array<Player>, message: string) {
   for(let player of channel) {
     if(player.sock.readyState === ws.OPEN) {

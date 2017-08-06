@@ -47,7 +47,7 @@ function createWebSocket(username: string) {
       case "characterSelection":
         i = data.index;
         character = <HTMLElement>characters[i];
-        character.style.borderWidth = "20px";
+        character.style.borderWidth = "5px";
         character.style.borderColor = "Orange";
         console.log(event.data);
         return;
@@ -181,7 +181,6 @@ function createWebSocket(username: string) {
   };
 
   let characters = document.getElementsByClassName("character");
-  console.log("Num characters " + characters.length);
   for(let i = 0; i < characters.length; i++) {
     let character = <HTMLElement>characters[i];
     character.onclick = function() {
@@ -190,7 +189,6 @@ function createWebSocket(username: string) {
         index: i
       };
       sock.send(JSON.stringify(message));
-      console.log("Set up " + i);
     }
   }
 

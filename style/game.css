@@ -13,6 +13,9 @@ body {
 
 .character {
   display: none;
+  border: solid;
+  border-color: white;
+  border-radius: 15px;
   text-align: justify;
   word-wrap: break-word;
   color: black;
@@ -23,7 +26,6 @@ body {
 #campus-police-cop {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -31,7 +33,6 @@ body {
 #hottie {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -39,7 +40,6 @@ body {
 #gossip {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -47,7 +47,6 @@ body {
 #new-guy {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -55,7 +54,6 @@ body {
 #angel {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -63,7 +61,6 @@ body {
 #narcissist {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -71,7 +68,6 @@ body {
 #teacher {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -79,7 +75,6 @@ body {
 #insider {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -87,7 +82,6 @@ body {
 #stud {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -95,7 +89,6 @@ body {
 #individual {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -103,7 +96,6 @@ body {
 #good-girl {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -111,7 +103,6 @@ body {
 #texan {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -119,7 +110,6 @@ body {
 #actor {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -127,7 +117,6 @@ body {
 #townie {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
@@ -135,7 +124,6 @@ body {
 #ra {
   width: 125px;
   height: 75px;
-  border-radius: 15px;
   margin: 15px 15px;
   background: white;
 }
