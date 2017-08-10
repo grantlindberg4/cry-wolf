@@ -79,28 +79,28 @@ function createWebSocket(username: string) {
   });
 
   sock.addEventListener("message", function(event) {
-    let data = JSON.parse(event.data);
-    switch(data.type) {
+    let message = JSON.parse(event.data);
+    switch(message.type) {
       case "join":
-        logMessage("join-message", data.message);
+        logMessage("join-message", message.message);
         break;
       case "leave":
-        logMessage("leave-message", data.message);
+        logMessage("leave-message", message.message);
         break;
       case "chat":
-        logMessage("chat-message", data.message);
+        logMessage("chat-message", message.message);
         break;
       case "showCharacters":
         showCharacters();
         return;
       case "phaseAnnouncement":
-        logMessage("phase-announcement", data.message);
+        logMessage("phase-announcement", message.message);
         break;
       case "characterSelection":
-        selectCharacter(data.index);
+        selectCharacter(message.index);
         break;
       case "characterDeselection":
-        deselectCharacter(data.index);
+        deselectCharacter(message.index);
         break;
       case "startCountDown":
         startTimer();
@@ -109,19 +109,19 @@ function createWebSocket(username: string) {
         stopTimer();
         break;
       case "tick":
-        tick(data.time);
+        tick(message.time);
         break;
       case "roleAssignment":
-        logMessage("role-assignment", data.message);
+        logMessage("role-assignment", message.message);
         break;
       case "gameStart":
-        showSelectedCharacters(data.characters);
+        showSelectedCharacters(message.characters);
         break;
       case "fullLobby":
-        rejectClient(data.message);
+        rejectClient(message.message);
         break;
       case "gameInProgress":
-        rejectClient(data.message);
+        rejectClient(message.message);
         break;
       default:
         // Something went wrong

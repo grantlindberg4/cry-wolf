@@ -40,6 +40,18 @@ enum Phase {
 let characters = new Array<boolean>(NUM_CHARACTERS);
 characters.fill(true);
 
+function findAvailableCharacter() {
+  for(let i = 0; i < characters.length; i++) {
+    if(characters[i]) {
+      characters[i] = false;
+      return i;
+    }
+  }
+
+  // Uh oh...
+  return -1;
+}
+
 class Player {
   username: string;
   sock: WebSocket;
@@ -49,13 +61,7 @@ class Player {
   constructor(username: string, sock: WebSocket) {
     this.username = username;
     this.sock = sock;
-    for(let i = 0; i < characters.length; i++) {
-      if(characters[i]) {
-        this.character = i;
-        characters[i] = false;
-        break;
-      }
-    }
+    this.character = findAvailableCharacter();
     this.role = Role.None;
 
     this.sock.isAlive = true;
@@ -143,83 +149,110 @@ class Game {
     }
   }
 
+  initCharacterSelectionPhase() {
+    this.phase = Phase.CharacterSelection;
+    let message;
+    message = {
+      type: "showCharacters"
+    };
+    broadcast(players, JSON.stringify(message));
+    for(let i = 0; i < characters.length; i++) {
+      if(!characters[i]) {
+        message = {
+          type: "characterSelection",
+          index: i
+        };
+        broadcast(players, JSON.stringify(message));
+      }
+    }
+    this.timeRemaining = CHARACTER_SELECTION_DURATION;
+  }
+
+  initDayPhase() {
+    this.phase = Phase.Day;
+    let message = {
+      type: "phaseAnnouncement",
+      message: "It is day. Find the wolves before time runs out!"
+    };
+    broadcast(players, JSON.stringify(message));
+    this.timeRemaining = DAY_DURATION;
+  }
+
+  initSuddenDeathPhase() {
+    this.phase = Phase.SuddenDeath;
+    let message = {
+      type: "phaseAnnouncement",
+      message: "It is sudden death. Good luck..."
+    };
+    broadcast(players, JSON.stringify(message));
+    this.timeRemaining = SUDDEN_DEATH_DURATION;
+  }
+
+  initNightPhase() {
+    this.phase = Phase.Night;
+    let message = {
+      type: "phaseAnnouncement",
+      message: "It is night, and the wolves are hunting..."
+    };
+    broadcast(players, JSON.stringify(message));
+    this.timeRemaining = NIGHT_DURATION;
+  }
+
+  initPostGame() {
+    // Don't forget to broadcast the winning team
+    let message = {
+      type: "phaseAnnouncement",
+      message: "The game is over"
+    };
+    broadcast(players, JSON.stringify(message));
+  }
+
   cyclePhase() {
     // Use types for the messages to help hide/reveal elements for the players
     // for each phase respectively
-    let message;
     switch(this.phase) {
       case Phase.PreGame:
-        this.phase = Phase.CharacterSelection;
-        message = {
-          type: "showCharacters"
-        };
-        broadcast(players, JSON.stringify(message));
-        for(let i = 0; i < characters.length; i++) {
-          if(!characters[i]) {
-            message = {
-              type: "characterSelection",
-              index: i
-            };
-            broadcast(players, JSON.stringify(message));
-          }
-        }
-        this.timeRemaining = CHARACTER_SELECTION_DURATION;
+        this.initCharacterSelectionPhase();
         break;
       case Phase.CharacterSelection:
         this.start();
-        this.phase = Phase.Day;
-        message = {
-          type: "phaseAnnouncement",
-          message: "It is day. Find the wolves before time runs out!"
-        };
-        broadcast(players, JSON.stringify(message));
-        this.timeRemaining = DAY_DURATION;
+        this.initDayPhase();
         break;
       case Phase.Day:
-        this.phase = Phase.SuddenDeath;
-        message = {
-          type: "phaseAnnouncement",
-          message: "It is sudden death. Good luck..."
-        };
-        broadcast(players, JSON.stringify(message));
-        this.timeRemaining = SUDDEN_DEATH_DURATION;
+        this.initSuddenDeathPhase();
         break;
       case Phase.SuddenDeath:
-        this.phase = Phase.Night;
-        message = {
-          type: "phaseAnnouncement",
-          message: "It is night, and the wolves are hunting..."
-        };
-        broadcast(players, JSON.stringify(message));
-        this.timeRemaining = NIGHT_DURATION;
+        this.initNightPhase();
         break;
       case Phase.Night:
-        this.phase = Phase.Day;
-        message = {
-          type: "phaseAnnouncement",
-          message: "It is day. Find the wolves before time runs out!"
-        };
-        broadcast(players, JSON.stringify(message));
-        this.timeRemaining = DAY_DURATION;
+        this.initDayPhase();
         break;
       case Phase.PostGame:
-        // Don't forget to broadcast the winning team
-        message = {
-          type: "phaseAnnouncement",
-          message: "The game is over"
-        };
-        broadcast(players, JSON.stringify(message));
+        this.initPostGame();
         break;
       default:
         // Oh, fuck...
         break;
     }
-    message = {
-      type: "startCountDown"
-    };
-    broadcast(players, JSON.stringify(message));
-    countDownInterval = setInterval(countDown, SECOND);
+
+    startTimer();
   }
+}
+
+function startTimer() {
+  let message = {
+    type: "startCountDown"
+  };
+  broadcast(players, JSON.stringify(message));
+  countDownInterval = setInterval(countDown, SECOND);
+}
+
+function stopTimer() {
+  clearInterval(countDownInterval);
+  let message = {
+    type: "stopCountDown"
+  };
+  broadcast(players, JSON.stringify(message));
 }
 
 // Consider adding this to the game class
@@ -237,11 +270,7 @@ let game = new Game();
 
 function countDown() {
   if(game.timeRemaining <= 0) {
-    clearInterval(countDownInterval);
-    let message = {
-      type: "stopCountDown"
-    };
-    broadcast(players, JSON.stringify(message));
+    stopTimer();
     game.cyclePhase();
     return;
   }
@@ -253,12 +282,7 @@ function countDown() {
   game.timeRemaining--;
 }
 
-const server = new ws.Server({
-  port: 8080,
-  clientTracking: true
-});
-
-server.on("connection", function connection(sock: WebSocket) {
+function playerCanJoin(sock: WebSocket) {
   if(players.length >= MAX_PLAYERS) {
     let message = {
       type: "fullLobby",
@@ -266,7 +290,7 @@ server.on("connection", function connection(sock: WebSocket) {
     };
     sock.send(JSON.stringify(message));
     sock.close();
-    return;
+    return false;
   }
   if(game.phase != Phase.PreGame) {
     let message = {
@@ -275,6 +299,51 @@ server.on("connection", function connection(sock: WebSocket) {
     };
     sock.send(JSON.stringify(message));
     sock.close();
+    return false;
+  }
+
+  return true;
+}
+
+function sendJoinMessage(username: string) {
+  let joinMessage = {
+    type: "join",
+    message: username + " has joined!"
+  };
+  broadcast(players, JSON.stringify(joinMessage));
+}
+
+function deselectCharacter(player: Player, i: number) {
+  characters[player.character] = true;
+  let message = {
+    type: "characterDeselection",
+    index: player.character
+  };
+  broadcast(players, JSON.stringify(message));
+}
+
+function selectCharacter(player: Player, i: number) {
+  player.character = i;
+  characters[player.character] = false;
+  let message = {
+    type: "characterSelection",
+    index: i
+  };
+  broadcast(players, JSON.stringify(message));
+}
+
+function formatPost(username: string, message: string) {
+  message = message.substring(0, MAX_MESSAGE_LENGTH);
+  return username + ": " + message;
+}
+
+const server = new ws.Server({
+  port: 8080,
+  clientTracking: true
+});
+
+server.on("connection", function connection(sock: WebSocket) {
+  if(!playerCanJoin(sock)) {
     return;
   }
 
@@ -282,11 +351,7 @@ server.on("connection", function connection(sock: WebSocket) {
   players.push(player);
 
   if(players.length == MAX_PLAYERS) {
-    let message = {
-      type: "startCountDown"
-    };
-    broadcast(players, JSON.stringify(message));
-    countDownInterval = setInterval(countDown, SECOND);
+    startTimer();
   }
 
   player.sock.on("message", function incoming(data: string) {
@@ -294,35 +359,18 @@ server.on("connection", function connection(sock: WebSocket) {
     switch(message.type) {
       case "join":
         player.username = message.username;
-        let joinMessage = {
-          type: "join",
-          message: player.username + " has joined!"
-        };
-        broadcast(players, JSON.stringify(joinMessage));
+        sendJoinMessage(player.username);
         break;
       case "characterSelection":
         let i = message.index;
         if(characters[i]) {
-          let notice;
-          characters[player.character] = true;
-          notice = {
-            type: "characterDeselection",
-            index: player.character
-          };
-          broadcast(players, JSON.stringify(notice));
-          player.character = i;
-          characters[player.character] = false;
-          notice = {
-            type: "characterSelection",
-            index: player.character
-          };
-          broadcast(players, JSON.stringify(notice));
+          deselectCharacter(player, i);
+          selectCharacter(player, i);
         }
         break;
       case "chat":
         // Consider using a switch statement to determine the channel
-        message.message = message.message.substring(0, MAX_MESSAGE_LENGTH);
-        message.message = player.username + ": " + message.message;
+        message.message = formatPost(player.username, message.message);
         broadcast(players, JSON.stringify(message));
         break;
       default:
@@ -349,12 +397,8 @@ server.on("connection", function connection(sock: WebSocket) {
     players.splice(i, 1);
 
     if(players.length < MAX_PLAYERS && game.phase == Phase.PreGame) {
-      let message = {
-        type: "stopCountDown"
-      };
+      stopTimer();
       game.timeRemaining = TIME_UNTIL_GAME_START;
-      broadcast(players, JSON.stringify(message));
-      clearInterval(countDownInterval);
     }
   });
 });
