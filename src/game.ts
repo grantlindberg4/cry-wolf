@@ -1,3 +1,67 @@
+function rejectClient(message: string) {
+  alert(message);
+  sock.close();
+}
+
+function showCharacters() {
+  let characterTokens = document.getElementsByClassName("character");
+  for(let i = 0; i < characterTokens.length; i++) {
+    let character = <HTMLElement>characterTokens[i];
+    character.style.display = "flex";
+  }
+}
+
+function showSelectedCharacters(characters: Array<boolean>) {
+  let characterTokens = document.getElementsByClassName("character");
+  for(let i = 0; i < characters.length; i++) {
+    let character = <HTMLElement>characterTokens[i];
+    if(characters[i]) {
+      character.style.display = "none";
+    }
+    else {
+      character.style.borderColor = "White";
+    }
+  }
+}
+
+function logMessage(type: string, message: string) {
+  let post = document.createElement("p");
+  post.classList.add(type);
+  post.innerText = message;
+  let log = document.getElementById("log")!;
+  log.appendChild(post);
+}
+
+function selectCharacter(i: number) {
+  let characterTokens = document.getElementsByClassName("character");
+  let character = <HTMLElement>characterTokens[i];
+  character.style.borderColor = "Orange";
+}
+
+function deselectCharacter(i: number) {
+  let characterTokens = document.getElementsByClassName("character");
+  let character = <HTMLElement>characterTokens[i];
+  character.style.borderColor = "White";
+}
+
+function startTimer() {
+  let timer = document.getElementById("timer")!;
+  timer.style.visibility = "visible";
+  let time = document.createElement("h1");
+  timer.appendChild(time);
+}
+
+function stopTimer() {
+  let timer = document.getElementById("timer")!;
+  timer.style.visibility = "hidden";
+}
+
+function tick(time: string) {
+  let timer = document.getElementById("timer")!;
+  let currTime = timer.children[0];
+  currTime.textContent = time;
+}
+
 function createWebSocket(username: string) {
   const URL = "ws://localhost:8080";
   let sock = new WebSocket(URL);
@@ -11,94 +75,58 @@ function createWebSocket(username: string) {
   });
 
   sock.addEventListener("error", function() {
-    console.log("An error has occurred with client: " + username);
-    alert("The server is currently unavailable. Please try later.");
+    rejectClient("The server is currently unavailable. Please try later.");
   });
 
   sock.addEventListener("message", function(event) {
-    // console.log(event.data);
     let data = JSON.parse(event.data);
-    let type = data.type;
-    let message = document.createElement("p");
-    let timer = document.getElementById("timer")!;
-    let characters = document.getElementsByClassName("character");
-    let character;
-    let i;
-    let time;
-    switch(type) {
+    switch(data.type) {
       case "join":
-        message.classList.add("join-message");
+        logMessage("join-message", data.message);
         break;
       case "leave":
-        message.classList.add("leave-message");
+        logMessage("leave-message", data.message);
         break;
       case "chat":
-        message.classList.add("chat-message");
+        logMessage("chat-message", data.message);
         break;
       case "showCharacters":
-        for(let i = 0; i < characters.length; i++) {
-          character = <HTMLElement>characters[i];
-          character.style.display = "flex";
-        }
+        showCharacters();
         return;
       case "phaseAnnouncement":
-        message.classList.add("phase-announcement");
+        logMessage("phase-announcement", data.message);
         break;
       case "characterSelection":
-        i = data.index;
-        character = <HTMLElement>characters[i];
-        character.style.borderWidth = "5px";
-        character.style.borderColor = "Orange";
-        console.log(event.data);
-        return;
+        selectCharacter(data.index);
+        break;
       case "characterDeselection":
-        i = data.index;
-        character = <HTMLElement>characters[i];
-        character.style.borderWidth = "0px";
-        character.style.borderColor = "White";
-        console.log(event.data);
-        return;
+        deselectCharacter(data.index);
+        break;
       case "startCountDown":
-        timer.style.visibility = "visible";
-        time = document.createElement("h1");
-        timer.appendChild(time);
-        return;
+        startTimer();
+        break;
       case "stopCountDown":
-        timer.style.visibility = "hidden";
-        return;
+        stopTimer();
+        break;
       case "tick":
-        time = timer.children[0];
-        time.textContent = data.time;
-        return;
+        tick(data.time);
+        break;
       case "roleAssignment":
-        message.classList.add("role-assignment");
+        logMessage("role-assignment", data.message);
         break;
       case "gameStart":
-        let selectedCharacters = data.characters;
-        for(let i = 0; i < characters.length; i++) {
-          console.log("gameStart " + i);
-          let currentCharacter = <HTMLElement>characters[i];
-          if(selectedCharacters[i]) {
-            currentCharacter.style.display = "none";
-          }
-          else {
-            currentCharacter.style.borderWidth = "0px";
-            currentCharacter.style.borderColor = "White";
-          }
-        }
-        console.log(event.data);
-        return;
+        showSelectedCharacters(data.characters);
+        break;
       case "fullLobby":
-        alert(data.message);
-        sock.close();
-        return;
+        rejectClient(data.message);
+        break;
+      case "gameInProgress":
+        rejectClient(data.message);
+        break;
       default:
         // Something went wrong
         break;
     }
-    message.innerText = data.message;
-    let log = document.getElementById("log")!;
-    log.appendChild(message);
   });
 
   sock.addEventListener("close", function(e) {
@@ -161,38 +189,39 @@ function createWebSocket(username: string) {
     window.location.replace("index.html");
   });
 
-  // Change onclick to be event listener for consistency
   let sendButton = <HTMLElement>document.getElementById("send-button");
-  sendButton.onclick = function() {
-    let messageBox = <HTMLInputElement>document.getElementById("message");
-    if(messageBox.value.trim() != "") {
-      let message = {
-        type: "chat",
-        message: messageBox.value
-      };
-      sock.send(JSON.stringify(message));
-      messageBox.value = "";
-    }
-  };
+  sendButton.addEventListener("click", sendMessage);
 
   let exitButton = <HTMLElement>document.getElementById("exit-button");
-  exitButton.onclick = function() {
+  exitButton.addEventListener("click", function exit() {
     window.location.replace("index.html");
-  };
+  });
 
-  let characters = document.getElementsByClassName("character");
-  for(let i = 0; i < characters.length; i++) {
-    let character = <HTMLElement>characters[i];
-    character.onclick = function() {
+  let characterTokens = document.getElementsByClassName("character");
+  for(let i = 0; i < characterTokens.length; i++) {
+    let character = <HTMLElement>characterTokens[i];
+    character.addEventListener("click", function() {
       let message = {
         type: "characterSelection",
         index: i
       };
       sock.send(JSON.stringify(message));
-    }
+    });
   }
 
   return sock;
+}
+
+function sendMessage() {
+  let messageBox = <HTMLInputElement>document.getElementById("message");
+  if(messageBox.value.trim() != "") {
+    let message = {
+      type: "chat",
+      message: messageBox.value
+    };
+    sock.send(JSON.stringify(message));
+  }
+  messageBox.value = "";
 }
 
 let sock: WebSocket;
@@ -209,15 +238,7 @@ window.addEventListener("keydown", function(event) {
   }
   switch(event.key) {
     case "Enter":
-      let messageBox = <HTMLInputElement>document.getElementById("message");
-      if(messageBox.value.trim() != "") {
-        let message = {
-          type: "chat",
-          message: messageBox.value
-        };
-        sock.send(JSON.stringify(message));
-        messageBox.value = "";
-      }
+      sendMessage();
       break;
     default:
       return;

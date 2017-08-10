@@ -259,12 +259,19 @@ const server = new ws.Server({
 });
 
 server.on("connection", function connection(sock: WebSocket) {
-  // Consider breaking this into two different if() statements to send a unique
-  // message
-  if(players.length >= MAX_PLAYERS || game.phase != Phase.PreGame) {
+  if(players.length >= MAX_PLAYERS) {
     let message = {
       type: "fullLobby",
       message: "Sorry, this lobby is currently full. Please try again later."
+    };
+    sock.send(JSON.stringify(message));
+    sock.close();
+    return;
+  }
+  if(game.phase != Phase.PreGame) {
+    let message = {
+      type: "gameInProgress",
+      message: "The game you are trying to join is currently in progress."
     };
     sock.send(JSON.stringify(message));
     sock.close();
