@@ -12,8 +12,7 @@ const NUM_CHARACTERS = 15;
 const MAX_MESSAGE_LENGTH = 300;
 
 const SECOND = 1000;
-const TIME_UNTIL_GAME_START = 10;
-const CHARACTER_SELECTION_DURATION = 30;
+const TIME_UNTIL_GAME_START = 15;
 const DAY_DURATION = 7;
 const SUDDEN_DEATH_DURATION = 15;
 const NIGHT_DURATION = 25;
@@ -149,25 +148,6 @@ class Game {
     }
   }
 
-  initCharacterSelectionPhase() {
-    this.phase = Phase.CharacterSelection;
-    let message;
-    message = {
-      type: "showCharacters"
-    };
-    broadcast(players, JSON.stringify(message));
-    for(let i = 0; i < characters.length; i++) {
-      if(!characters[i]) {
-        message = {
-          type: "characterSelection",
-          index: i
-        };
-        broadcast(players, JSON.stringify(message));
-      }
-    }
-    this.timeRemaining = CHARACTER_SELECTION_DURATION;
-  }
-
   initDayPhase() {
     this.phase = Phase.Day;
     let message = {
@@ -212,9 +192,6 @@ class Game {
     // for each phase respectively
     switch(this.phase) {
       case Phase.PreGame:
-        this.initCharacterSelectionPhase();
-        break;
-      case Phase.CharacterSelection:
         this.start();
         this.initDayPhase();
         break;
@@ -337,6 +314,18 @@ function formatPost(username: string, message: string) {
   return username + ": " + message;
 }
 
+function showSelectedCharacters() {
+  for(let i = 0; i < characters.length; i++) {
+    if(!characters[i]) {
+      let message = {
+        type: "characterSelection",
+        index: i
+      };
+      broadcast(players, JSON.stringify(message));
+    }
+  }
+}
+
 const server = new ws.Server({
   port: 8080,
   clientTracking: true
@@ -349,6 +338,7 @@ server.on("connection", function connection(sock: WebSocket) {
 
   let player = new Player("", sock);
   players.push(player);
+  showSelectedCharacters();
 
   if(players.length == MAX_PLAYERS) {
     startTimer();

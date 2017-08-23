@@ -3,14 +3,6 @@ function rejectClient(message: string) {
   sock.close();
 }
 
-function showCharacters() {
-  let characterTokens = document.getElementsByClassName("character");
-  for(let i = 0; i < characterTokens.length; i++) {
-    let character = <HTMLElement>characterTokens[i];
-    character.style.display = "flex";
-  }
-}
-
 function showSelectedCharacters(characters: Array<boolean>) {
   let characterTokens = document.getElementsByClassName("character");
   for(let i = 0; i < characters.length; i++) {
@@ -90,9 +82,6 @@ function createWebSocket(username: string) {
       case "chat":
         logMessage("chat-message", message.message);
         break;
-      case "showCharacters":
-        showCharacters();
-        return;
       case "phaseAnnouncement":
         logMessage("phase-announcement", message.message);
         break;

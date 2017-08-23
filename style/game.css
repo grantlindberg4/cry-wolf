@@ -13,7 +13,7 @@ body {
 }
 
 .character {
-  display: none;
+  display: flex;
   width: 125px;
   height: 75px;
   margin: 15px 15px;
