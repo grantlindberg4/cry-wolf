@@ -1,9 +1,9 @@
-function rejectClient(message: string) {
+function rejectClient(message: string): void {
   alert(message);
   sock.close();
 }
 
-function showSelectedCharacters(characters: Array<boolean>) {
+function showSelectedCharacters(characters: Array<boolean>): void {
   let characterTokens = document.getElementsByClassName("character");
   for(let i = 0; i < characters.length; i++) {
     let character = <HTMLElement>characterTokens[i];
@@ -16,7 +16,7 @@ function showSelectedCharacters(characters: Array<boolean>) {
   }
 }
 
-function logMessage(type: string, message: string) {
+function logMessage(type: string, message: string): void {
   let post = document.createElement("p");
   post.classList.add(type);
   post.innerText = message;
@@ -24,41 +24,41 @@ function logMessage(type: string, message: string) {
   log.appendChild(post);
 }
 
-function selectCharacter(i: number) {
+function selectCharacter(i: number): void {
   let characterTokens = document.getElementsByClassName("character");
   let character = <HTMLElement>characterTokens[i];
   character.style.borderColor = "Orange";
 }
 
-function deselectCharacter(i: number) {
+function deselectCharacter(i: number): void {
   let characterTokens = document.getElementsByClassName("character");
   let character = <HTMLElement>characterTokens[i];
   character.style.borderColor = "White";
 }
 
-function startTimer() {
+function startTimer(): void {
   let timer = document.getElementById("timer")!;
   timer.style.visibility = "visible";
   let time = document.createElement("h1");
   timer.appendChild(time);
 }
 
-function stopTimer() {
+function stopTimer(): void {
   let timer = document.getElementById("timer")!;
   timer.style.visibility = "hidden";
 }
 
-function tick(time: string) {
+function tick(time: string): void {
   let timer = document.getElementById("timer")!;
   let currTime = timer.children[0];
   currTime.textContent = time;
 }
 
-function createWebSocket(username: string) {
+function createWebSocket(username: string): WebSocket {
   const URL = "ws://localhost:8080";
   let sock = new WebSocket(URL);
 
-  sock.addEventListener("open", function(event) {
+  sock.addEventListener("open", function(event): void {
     let message = {
       type: "join",
       username: username
@@ -66,11 +66,11 @@ function createWebSocket(username: string) {
     sock.send(JSON.stringify(message));
   });
 
-  sock.addEventListener("error", function() {
+  sock.addEventListener("error", function(): void {
     rejectClient("The server is currently unavailable. Please try later.");
   });
 
-  sock.addEventListener("message", function(event) {
+  sock.addEventListener("message", function(event): void {
     let message = JSON.parse(event.data);
     switch(message.type) {
       case "join":
@@ -118,7 +118,7 @@ function createWebSocket(username: string) {
     }
   });
 
-  sock.addEventListener("close", function(e) {
+  sock.addEventListener("close", function(e): void {
     let reason;
     switch(e.code) {
       case 1000:
@@ -182,7 +182,7 @@ function createWebSocket(username: string) {
   sendButton.addEventListener("click", sendMessage);
 
   let exitButton = <HTMLElement>document.getElementById("exit-button");
-  exitButton.addEventListener("click", function exit() {
+  exitButton.addEventListener("click", function exit(): void {
     window.location.replace("index.html");
   });
 
@@ -201,7 +201,7 @@ function createWebSocket(username: string) {
   return sock;
 }
 
-function sendMessage() {
+function sendMessage(): void {
   let messageBox = <HTMLInputElement>document.getElementById("message");
   if(messageBox.value.trim() != "") {
     let message = {

@@ -39,7 +39,7 @@ enum Phase {
 let characters = new Array<boolean>(NUM_CHARACTERS);
 characters.fill(true);
 
-function findAvailableCharacter() {
+function findAvailableCharacter(): number {
   for(let i = 0; i < characters.length; i++) {
     if(characters[i]) {
       characters[i] = false;
@@ -216,7 +216,7 @@ class Game {
   }
 }
 
-function startTimer() {
+function startTimer(): void {
   let message = {
     type: "startCountDown"
   };
@@ -224,7 +224,7 @@ function startTimer() {
   countDownInterval = setInterval(countDown, SECOND);
 }
 
-function stopTimer() {
+function stopTimer(): void {
   clearInterval(countDownInterval);
   let message = {
     type: "stopCountDown"
@@ -235,7 +235,7 @@ function stopTimer() {
 // Consider adding this to the game class
 // Here is where information from chat messages will be copied into the
 // transcript
-function broadcast(channel: Array<Player>, message: string) {
+function broadcast(channel: Array<Player>, message: string): void {
   for(let player of channel) {
     if(player.sock.readyState === ws.OPEN) {
       player.sock.send(message);
@@ -245,7 +245,7 @@ function broadcast(channel: Array<Player>, message: string) {
 
 let game = new Game();
 
-function countDown() {
+function countDown(): void {
   if(game.timeRemaining <= 0) {
     stopTimer();
     game.cyclePhase();
@@ -259,7 +259,7 @@ function countDown() {
   game.timeRemaining--;
 }
 
-function playerCanJoin(sock: WebSocket) {
+function playerCanJoin(sock: WebSocket): boolean {
   if(players.length >= MAX_PLAYERS) {
     let message = {
       type: "fullLobby",
@@ -282,7 +282,7 @@ function playerCanJoin(sock: WebSocket) {
   return true;
 }
 
-function sendJoinMessage(username: string) {
+function sendJoinMessage(username: string): void {
   let joinMessage = {
     type: "join",
     message: username + " has joined!"
@@ -290,7 +290,7 @@ function sendJoinMessage(username: string) {
   broadcast(players, JSON.stringify(joinMessage));
 }
 
-function deselectCharacter(player: Player, i: number) {
+function deselectCharacter(player: Player, i: number): void {
   characters[player.character] = true;
   let message = {
     type: "characterDeselection",
@@ -299,7 +299,7 @@ function deselectCharacter(player: Player, i: number) {
   broadcast(players, JSON.stringify(message));
 }
 
-function selectCharacter(player: Player, i: number) {
+function selectCharacter(player: Player, i: number): void {
   player.character = i;
   characters[player.character] = false;
   let message = {
@@ -309,12 +309,12 @@ function selectCharacter(player: Player, i: number) {
   broadcast(players, JSON.stringify(message));
 }
 
-function formatPost(username: string, message: string) {
+function formatPost(username: string, message: string): string {
   message = message.substring(0, MAX_MESSAGE_LENGTH);
   return username + ": " + message;
 }
 
-function showSelectedCharacters() {
+function showSelectedCharacters(): void {
   for(let i = 0; i < characters.length; i++) {
     if(!characters[i]) {
       let message = {
@@ -331,7 +331,7 @@ const server = new ws.Server({
   clientTracking: true
 });
 
-server.on("connection", function connection(sock: WebSocket) {
+server.on("connection", function connection(sock: WebSocket): void {
   if(!playerCanJoin(sock)) {
     return;
   }
@@ -344,7 +344,7 @@ server.on("connection", function connection(sock: WebSocket) {
     startTimer();
   }
 
-  player.sock.on("message", function incoming(data: string) {
+  player.sock.on("message", function incoming(data: string): void {
     let message = JSON.parse(data);
     switch(message.type) {
       case "join":
@@ -369,7 +369,7 @@ server.on("connection", function connection(sock: WebSocket) {
     }
   });
 
-  player.sock.on("close", function() {
+  player.sock.on("close", function(): void {
     characters[player.character] = true;
     let message;
     message = {
@@ -393,12 +393,12 @@ server.on("connection", function connection(sock: WebSocket) {
   });
 });
 
-server.on("error", function(e) {
+server.on("error", function(e): void {
   console.log("The server has experienced an error and has shut down");
   server.close()
 });
 
-function heartbeat(this: WebSocket) {
+function heartbeat(this: WebSocket): void {
   this.isAlive = true;
 }
 
