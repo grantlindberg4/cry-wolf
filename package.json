@@ -7,7 +7,7 @@
   "dependencies": {
     "@types/ws": "^3.0.2",
     "tsc": "^1.20150623.0",
-    "typescript": "^2.4.1",
+    "typescript": "^2.5.2",
     "ws": "^3.1.0"
   },
   "scripts": {

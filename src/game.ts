@@ -54,6 +54,23 @@ function tick(time: string): void {
   currTime.textContent = time;
 }
 
+function showSuspicions() {
+  let suspicions = document.getElementsByClassName("suspicions");
+  for(let i = 0; i < suspicions.length; i++) {
+    let suspicion = <HTMLElement>suspicions[i];
+    suspicion.textContent = "Suspicions: 0";
+    suspicion.style.display = "inline-block";
+  }
+}
+
+function hideSuspicions() {
+  let suspicions = document.getElementsByClassName("suspicions");
+  for(let i = 0; i < suspicions.length; i++) {
+    let suspicion = <HTMLElement>suspicions[i];
+    suspicion.style.display = "none";
+  }
+}
+
 function createWebSocket(username: string): WebSocket {
   const URL = "ws://localhost:8080";
   let sock = new WebSocket(URL);
@@ -105,6 +122,12 @@ function createWebSocket(username: string): WebSocket {
         break;
       case "gameStart":
         showSelectedCharacters(message.characters);
+        break;
+      case "showSuspicions":
+        showSuspicions();
+        break;
+      case "hideSuspicions":
+        hideSuspicions();
         break;
       case "fullLobby":
         rejectClient(message.message);

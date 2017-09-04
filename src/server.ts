@@ -150,9 +150,14 @@ class Game {
 
   initDayPhase() {
     this.phase = Phase.Day;
-    let message = {
+    let message;
+    message = {
       type: "phaseAnnouncement",
       message: "It is day. Find the wolves before time runs out!"
+    };
+    broadcast(players, JSON.stringify(message));
+    message = {
+      type: "showSuspicions"
     };
     broadcast(players, JSON.stringify(message));
     this.timeRemaining = DAY_DURATION;
@@ -160,9 +165,14 @@ class Game {
 
   initSuddenDeathPhase() {
     this.phase = Phase.SuddenDeath;
-    let message = {
+    let message;
+    message = {
       type: "phaseAnnouncement",
       message: "It is sudden death. Good luck..."
+    };
+    broadcast(players, JSON.stringify(message));
+    message = {
+      type: "hideSuspicions"
     };
     broadcast(players, JSON.stringify(message));
     this.timeRemaining = SUDDEN_DEATH_DURATION;
@@ -170,9 +180,14 @@ class Game {
 
   initNightPhase() {
     this.phase = Phase.Night;
-    let message = {
+    let message;
+    message = {
       type: "phaseAnnouncement",
       message: "It is night, and the wolves are hunting..."
+    };
+    broadcast(players, JSON.stringify(message));
+    message = {
+      type: "hideSuspicions"
     };
     broadcast(players, JSON.stringify(message));
     this.timeRemaining = NIGHT_DURATION;

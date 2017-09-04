@@ -16,20 +16,36 @@ body {
   display: flex;
   width: 125px;
   height: 75px;
-  margin: 15px 15px;
+  margin: 40px 20px;
   background: white;
   border: solid;
   border-color: white;
   border-radius: 15px;
   border-width: 5px;
+  text-align: left;
 }
 
-.character span {
-  display: block;
+.name {
+  display: inline-block;
   width: 100%;
-  margin-bottom: 10%;
+  /* margin: 20px 20px */
+  margin-top: 20%;
   color: black;
-  font-size: 20px;
+  font-size: 18px;
+  font-family: monospace;
+  font-weight: bold;
+  word-wrap: break-word;
+  text-align: center;
+}
+
+.suspicions {
+  /* display: inline-block; */
+  display: none;
+  width: 100%;
+  margin-top: 130%;
+  margin-left: -80%;
+  color: green;
+  font-size: 14;
   font-family: monospace;
   word-wrap: break-word;
 }
